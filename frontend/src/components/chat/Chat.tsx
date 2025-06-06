@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import ChatList from "./ChatList";
+import TypingIndicator from "./TypingIndicator";
 import api from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -157,14 +158,17 @@ export default function Chat() {
               <div className="text-gray-500">Loading messages...</div>
             </div>
           ) : (
-            messages.map((message) => (
-              <ChatMessage
-                key={message._id}
-                content={message.content}
-                role={message.sender}
-                timestamp={new Date(message.createdAt)}
-              />
-            ))
+            <>
+              {messages.map((message) => (
+                <ChatMessage
+                  key={message._id}
+                  content={message.content}
+                  role={message.sender}
+                  timestamp={new Date(message.createdAt)}
+                />
+              ))}
+              {isLoading && <TypingIndicator />}
+            </>
           )}
           <div ref={messagesEndRef} />
         </div>
