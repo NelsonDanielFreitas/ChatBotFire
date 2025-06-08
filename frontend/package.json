@@ -11,6 +11,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^3.3.4",
+    "@types/react-dropzone": "^5.1.0",
     "autoprefixer": "^10.4.17",
     "axios": "^1.6.7",
     "clsx": "^2.1.1",
@@ -19,6 +20,7 @@
     "postcss": "^8.4.35",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.50.1",
     "react-hot-toast": "^2.4.1",
     "tailwind-merge": "^2.6.0",

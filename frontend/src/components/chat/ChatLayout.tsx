@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useRouter } from "next/router";
 import { useAuth } from "@/hooks/useAuth";
+import { DocumentIcon } from "@heroicons/react/24/outline";
 
 interface ChatLayoutProps {
   children: ReactNode;
@@ -40,6 +41,17 @@ export default function ChatLayout({ children }: ChatLayoutProps) {
               <p className="text-sm text-gray-500">{user?.email}</p>
             </div>
           </div>
+        </div>
+
+        {/* Navigation */}
+        <div className="p-4 border-b border-gray-200">
+          <button
+            onClick={() => router.push("/pdf-upload")}
+            className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <DocumentIcon className="w-5 h-5" />
+            <span>Upload PDF</span>
+          </button>
         </div>
 
         {/* Chat History */}
