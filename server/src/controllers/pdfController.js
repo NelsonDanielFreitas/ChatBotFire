@@ -37,6 +37,167 @@ try {
   });
 }
 
+// Text cleaning and formatting functions
+function cleanText(text) {
+  return (
+    text
+      // Fix Portuguese characters
+      .replace(/[ãâáà]/g, "a")
+      .replace(/[ÃÂÁÀ]/g, "A")
+      .replace(/[éêè]/g, "e")
+      .replace(/[ÉÊÈ]/g, "E")
+      .replace(/[íîì]/g, "i")
+      .replace(/[ÍÎÌ]/g, "I")
+      .replace(/[óôõò]/g, "o")
+      .replace(/[ÓÔÕÒ]/g, "O")
+      .replace(/[úûù]/g, "u")
+      .replace(/[ÚÛÙ]/g, "U")
+      .replace(/[ç]/g, "c")
+      .replace(/[Ç]/g, "C")
+      // Fix common OCR issues
+      .replace(/[|]/g, "I")
+      .replace(/[l]/g, "I")
+      .replace(/[0]/g, "O")
+      .replace(/[1]/g, "I")
+      // Fix spacing and formatting
+      .replace(/\s+/g, " ") // Replace multiple spaces with single space
+      .replace(/([a-z])\s+([A-Z])/g, "$1 $2") // Fix space between lowercase and uppercase
+      .replace(/([.,!?])\s*([A-Z])/g, "$1 $2") // Ensure space after punctuation
+      .replace(/\s+([.,!?])/g, "$1") // Remove spaces before punctuation
+      .replace(/([a-z])-([a-z])/g, "$1$2") // Fix hyphenated words
+      .replace(/(\d)\s+(\d)/g, "$1$2") // Fix separated numbers
+      .replace(/([A-Za-z])\s*([.,!?])\s*([A-Za-z])/g, "$1$2 $3") // Fix spacing around punctuation
+      .replace(/([A-Za-z])\s*([-–—])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around dashes
+      .replace(/([A-Za-z])\s*([/])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around slashes
+      .replace(/([A-Za-z])\s*([(])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around parentheses
+      .replace(/([A-Za-z])\s*([)])\s*([A-Za-z])/g, "$1$2$3")
+      .replace(/([A-Za-z])\s*([[])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around brackets
+      .replace(/([A-Za-z])\s*([\]])\s*([A-Za-z])/g, "$1$2$3")
+      .replace(/([A-Za-z])\s*([{])/g, "$1$2") // Fix spacing around braces
+      .replace(/([}])\s*([A-Za-z])/g, "$1$2")
+      .replace(/([A-Za-z])\s*([=])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around equals
+      .replace(/([A-Za-z])\s*([+])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around plus
+      .replace(/([A-Za-z])\s*([*])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around asterisk
+      .replace(/([A-Za-z])\s*([&])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around ampersand
+      .replace(/([A-Za-z])\s*([#])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around hash
+      .replace(/([A-Za-z])\s*([@])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around at
+      .replace(/([A-Za-z])\s*([%])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around percent
+      .replace(/([A-Za-z])\s*([$])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around dollar
+      .replace(/([A-Za-z])\s*([€])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around euro
+      .replace(/([A-Za-z])\s*([£])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around pound
+      .replace(/([A-Za-z])\s*([¥])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around yen
+      .replace(/([A-Za-z])\s*([¢])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around cent
+      .replace(/([A-Za-z])\s*([§])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around section
+      .replace(/([A-Za-z])\s*([©])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around copyright
+      .replace(/([A-Za-z])\s*([®])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around registered
+      .replace(/([A-Za-z])\s*([™])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around trademark
+      .replace(/([A-Za-z])\s*([°])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around degree
+      .replace(/([A-Za-z])\s*([²])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around squared
+      .replace(/([A-Za-z])\s*([³])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around cubed
+      .replace(/([A-Za-z])\s*([±])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around plus-minus
+      .replace(/([A-Za-z])\s*([×])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around multiplication
+      .replace(/([A-Za-z])\s*([÷])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around division
+      .replace(/([A-Za-z])\s*([≠])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around not equal
+      .replace(/([A-Za-z])\s*([≤])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around less than or equal
+      .replace(/([A-Za-z])\s*([≥])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around greater than or equal
+      .replace(/([A-Za-z])\s*([∞])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around infinity
+      .replace(/([A-Za-z])\s*([∑])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around sum
+      .replace(/([A-Za-z])\s*([∏])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around product
+      .replace(/([A-Za-z])\s*([√])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around square root
+      .replace(/([A-Za-z])\s*([∫])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around integral
+      .replace(/([A-Za-z])\s*([∆])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around delta
+      .replace(/([A-Za-z])\s*([∇])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around nabla
+      .replace(/([A-Za-z])\s*([∂])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around partial
+      .replace(/([A-Za-z])\s*([∝])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around proportional
+      .replace(/([A-Za-z])\s*([∅])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around empty set
+      .replace(/([A-Za-z])\s*([∈])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around element of
+      .replace(/([A-Za-z])\s*([∉])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around not element of
+      .replace(/([A-Za-z])\s*([⊂])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around subset of
+      .replace(/([A-Za-z])\s*([⊃])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around superset of
+      .replace(/([A-Za-z])\s*([∪])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around union
+      .replace(/([A-Za-z])\s*([∩])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around intersection
+      .replace(/([A-Za-z])\s*([∨])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around logical or
+      .replace(/([A-Za-z])\s*([∧])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around logical and
+      .replace(/([A-Za-z])\s*([¬])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around logical not
+      .replace(/([A-Za-z])\s*([∀])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around for all
+      .replace(/([A-Za-z])\s*([∃])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around there exists
+      .replace(/([A-Za-z])\s*([∄])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around there does not exist
+      .replace(/([A-Za-z])\s*([∴])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around therefore
+      .replace(/([A-Za-z])\s*([∵])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around because
+      .replace(/([A-Za-z])\s*([∎])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around end of proof
+      .replace(/([A-Za-z])\s*([∏])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around product
+      .replace(/([A-Za-z])\s*([∑])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around sum
+      .replace(/([A-Za-z])\s*([∐])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around coproduct
+      .replace(/([A-Za-z])\s*([∅])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around empty set
+      .replace(/([A-Za-z])\s*([∈])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around element of
+      .replace(/([A-Za-z])\s*([∉])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around not element of
+      .replace(/([A-Za-z])\s*([⊂])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around subset of
+      .replace(/([A-Za-z])\s*([⊃])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around superset of
+      .replace(/([A-Za-z])\s*([∪])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around union
+      .replace(/([A-Za-z])\s*([∩])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around intersection
+      .replace(/([A-Za-z])\s*([∨])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around logical or
+      .replace(/([A-Za-z])\s*([∧])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around logical and
+      .replace(/([A-Za-z])\s*([¬])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around logical not
+      .replace(/([A-Za-z])\s*([∀])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around for all
+      .replace(/([A-Za-z])\s*([∃])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around there exists
+      .replace(/([A-Za-z])\s*([∄])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around there does not exist
+      .replace(/([A-Za-z])\s*([∴])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around therefore
+      .replace(/([A-Za-z])\s*([∵])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around because
+      .replace(/([A-Za-z])\s*([∎])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around end of proof
+      .trim()
+  );
+}
+
+function formatPageText(textContent) {
+  let formattedText = "";
+  let currentLine = "";
+  let lastY = null;
+  let lastFontSize = null;
+
+  // Sort items by vertical position (top to bottom) and then horizontal position (left to right)
+  const sortedItems = textContent.items.sort((a, b) => {
+    if (Math.abs(a.transform[5] - b.transform[5]) > 5) {
+      // If vertical difference is significant
+      return a.transform[5] - b.transform[5];
+    }
+    return a.transform[4] - b.transform[4];
+  });
+
+  for (const item of sortedItems) {
+    const y = item.transform[5];
+    const fontSize = Math.sqrt(
+      item.transform[0] * item.transform[0] +
+        item.transform[1] * item.transform[1]
+    );
+
+    // Check if we're on a new line
+    if (lastY !== null && Math.abs(y - lastY) > 5) {
+      formattedText += cleanText(currentLine) + "\n";
+      currentLine = "";
+    }
+
+    // Add space between words if needed
+    if (
+      currentLine &&
+      !currentLine.endsWith(" ") &&
+      !item.str.startsWith(" ")
+    ) {
+      currentLine += " ";
+    }
+
+    currentLine += item.str;
+    lastY = y;
+    lastFontSize = fontSize;
+  }
+
+  // Add the last line
+  if (currentLine) {
+    formattedText += cleanText(currentLine);
+  }
+
+  return formattedText;
+}
+
 // Function to extract text from an image using Tesseract
 async function extractTextFromImage(imageData) {
   console.log("Initializing Tesseract worker...");
@@ -52,7 +213,7 @@ async function extractTextFromImage(imageData) {
     } = await worker.recognize(imageData);
     console.log("Text extracted from image:", text.substring(0, 100));
 
-    return text;
+    return cleanText(text);
   } catch (error) {
     console.error("Error in OCR:", error);
     return "";
@@ -148,14 +309,11 @@ export const uploadPdf = async (req, res, next) => {
 
           // Extract regular text
           const textContent = await page.getTextContent();
-          const pageText = textContent.items
-            .map((item) => item.str)
-            .join(" ")
-            .trim();
+          const pageText = formatPageText(textContent);
 
           // If no text found, try OCR
           let finalPageText = pageText;
-          if (!pageText) {
+          if (!pageText.trim()) {
             console.log(`No text found on page ${i}, attempting OCR...`);
             const canvas = await renderPageToCanvas(page);
             const imageText = await extractTextFromImage(canvas.toBuffer());
