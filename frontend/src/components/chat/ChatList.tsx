@@ -43,7 +43,7 @@ export default function ChatList({
   if (isLoading) {
     return (
       <div className="p-4">
-        <div className="text-gray-500">Loading conversations...</div>
+        <div className="text-gray-400">Loading conversations...</div>
       </div>
     );
   }
@@ -51,9 +51,11 @@ export default function ChatList({
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-4">
-        <h2 className="text-lg font-semibold mb-4">Conversations</h2>
+        <h2 className="text-lg font-semibold mb-4 text-dark-text">
+          Conversations
+        </h2>
         {conversations.length === 0 ? (
-          <div className="text-gray-500">No conversations yet</div>
+          <div className="text-gray-400">No conversations yet</div>
         ) : (
           <div className="space-y-2">
             {conversations.map((conversation) => (
@@ -62,12 +64,12 @@ export default function ChatList({
                 onClick={() => onSelectChat(conversation._id)}
                 className={`w-full text-left p-3 rounded-lg transition-colors ${
                   selectedChatId === conversation._id
-                    ? "bg-primary-100 text-primary-900"
-                    : "hover:bg-gray-100"
+                    ? "bg-primary-900 text-primary-100"
+                    : "hover:bg-dark-bg text-dark-text"
                 }`}
               >
                 <div className="font-medium truncate">{conversation.title}</div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-400">
                   {format(new Date(conversation.updatedAt), "MMM d, h:mm a")}
                 </div>
               </button>

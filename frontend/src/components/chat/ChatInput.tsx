@@ -21,14 +21,17 @@ export default function ChatInput({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4">
+    <form
+      onSubmit={handleSubmit}
+      className="border-t border-dark-border p-4 bg-dark-card"
+    >
       <div className="flex items-center space-x-4">
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type your message..."
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="flex-1 rounded-lg border border-dark-border bg-dark-bg text-dark-text px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 placeholder-gray-500"
           disabled={isLoading}
         />
         <button
@@ -36,7 +39,7 @@ export default function ChatInput({
           disabled={!message.trim() || isLoading}
           className={`rounded-lg px-4 py-2 ${
             !message.trim() || isLoading
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              ? "bg-dark-bg text-gray-500 cursor-not-allowed"
               : "bg-primary-600 text-white hover:bg-primary-700"
           } transition-colors`}
         >

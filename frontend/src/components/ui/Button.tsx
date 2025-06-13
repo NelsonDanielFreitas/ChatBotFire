@@ -26,14 +26,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={twMerge(
           clsx(
             "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-dark-bg",
             "disabled:pointer-events-none disabled:opacity-50",
             {
               "bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500/20":
                 variant === "primary",
-              "bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-500/20":
+              "bg-dark-card text-dark-text hover:bg-dark-bg focus-visible:ring-gray-500/20":
                 variant === "secondary",
-              "border border-gray-300 bg-transparent hover:bg-gray-50 focus-visible:ring-gray-500/20":
+              "border border-dark-border bg-transparent text-dark-text hover:bg-dark-card focus-visible:ring-gray-500/20":
                 variant === "outline",
               "h-8 px-3 text-sm": size === "sm",
               "h-10 px-4": size === "md",

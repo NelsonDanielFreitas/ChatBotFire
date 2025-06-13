@@ -23,19 +23,18 @@ const ChatPage: NextPage = () => {
       ) {
         try {
           isNavigating.current = true;
-          console.log("Checking auth, attempt:", retryCount.current + 1); // Debug log
-          // Try to refresh the user state one more time
+          console.log("Checking auth, attempt:", retryCount.current + 1);
           await refreshUser();
           if (!user && mounted) {
-            console.log("No user found after refresh, redirecting to login"); // Debug log
+            console.log("No user found after refresh, redirecting to login");
             await router.replace("/login");
           }
         } catch (error) {
-          console.error("Auth check error:", error); // Debug log
+          console.error("Auth check error:", error);
           if (mounted) {
             retryCount.current += 1;
             if (retryCount.current >= 3) {
-              console.log("Max retries reached, redirecting to login"); // Debug log
+              console.log("Max retries reached, redirecting to login");
               await router.replace("/login");
             }
           }
@@ -56,23 +55,23 @@ const ChatPage: NextPage = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
+      <div className="flex h-screen items-center justify-center bg-dark-bg">
+        <div className="text-dark-text">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-red-600">
+      <div className="flex h-screen items-center justify-center bg-dark-bg">
+        <div className="text-red-400">
           <p>Error: {error}</p>
           <button
             onClick={() => {
               retryCount.current = 0;
               refreshUser();
             }}
-            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             Retry
           </button>
@@ -83,8 +82,8 @@ const ChatPage: NextPage = () => {
 
   if (!user) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-gray-600">Redirecting to login...</div>
+      <div className="flex h-screen items-center justify-center bg-dark-bg">
+        <div className="text-dark-text">Redirecting to login...</div>
       </div>
     );
   }

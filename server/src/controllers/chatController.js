@@ -4,6 +4,7 @@ import Document from "../models/Document.js";
 import DocumentEmbedding from "../models/DocumentEmbedding.js";
 import RetrievalLog from "../models/RetrievalLog.js";
 import ollamaService from "../services/ollamaService.js";
+import { encrypt, decrypt } from "../utils/crypto.js";
 
 // Start a new conversation
 export const startConversation = async (req, res, next) => {
@@ -65,17 +66,20 @@ export const sendMessage = async (req, res, next) => {
       });
     }
 
-    // Save user message
+    // Decrypt the incoming message
+    const decryptedContent = decrypt(content);
+
+    // Save encrypted user message
     const userMessage = await Message.create({
       conversationId,
       sender: "user",
-      content,
+      content, // Store encrypted content
     });
 
     // If this is the first message, generate a title
     const messageCount = await Message.countDocuments({ conversationId });
     if (messageCount === 1) {
-      const title = await generateTitle(content);
+      const title = await generateTitle(decryptedContent);
       await Conversation.findByIdAndUpdate(conversationId, {
         title,
         updatedAt: new Date(),
@@ -90,22 +94,25 @@ export const sendMessage = async (req, res, next) => {
       // Log retrieval
       await RetrievalLog.create({
         conversationId,
-        userQuery: content,
+        userQuery: decryptedContent,
         returnedDocs: relevantDocs.map((doc) => doc._id),
       });
 
       // Prepare context from relevant documents
       const context = relevantDocs.map((doc) => doc.content).join("\n\n");
 
-      // Get bot response
+      // Get bot response using decrypted content
       const { content: botResponse, tokensUsed } =
-        await ollamaService.generateResponse(content, context);
+        await ollamaService.generateResponse(decryptedContent, context);
 
-      // Save bot message
+      // Encrypt bot response before saving
+      const encryptedBotResponse = encrypt(botResponse);
+
+      // Save encrypted bot message
       const botMessage = await Message.create({
         conversationId,
         sender: "bot",
-        content: botResponse,
+        content: encryptedBotResponse,
         tokensUsed,
       });
 
@@ -128,12 +135,13 @@ export const sendMessage = async (req, res, next) => {
       });
     } catch (error) {
       console.error("Error processing message:", error);
-      // Save error message
+      // Save error message (encrypted)
       const errorMessage = await Message.create({
         conversationId,
         sender: "bot",
-        content:
-          "I apologize, but I encountered an error processing your message. Please try again.",
+        content: encrypt(
+          "I apologize, but I encountered an error processing your message. Please try again."
+        ),
       });
 
       res.status(200).json({
@@ -168,6 +176,7 @@ export const getConversationHistory = async (req, res, next) => {
       createdAt: 1,
     });
 
+    // Messages are already encrypted, frontend will handle decryption
     res.status(200).json({
       success: true,
       data: messages,

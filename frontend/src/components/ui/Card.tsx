@@ -13,10 +13,10 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={twMerge(
           clsx(
-            "rounded-xl bg-white shadow-lg transition-all duration-200",
+            "rounded-xl bg-dark-card shadow-lg transition-all duration-200",
             {
-              "border border-gray-200": variant === "bordered",
-              "bg-white/80 backdrop-blur-lg border border-white/20":
+              "border border-dark-border": variant === "bordered",
+              "bg-dark-card/80 backdrop-blur-lg border border-dark-border/20":
                 variant === "glass",
             },
             className

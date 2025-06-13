@@ -88,8 +88,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
   };
 
   return (
-    <Card className="glass-card w-full max-w-md p-8">
-      <h2 className="mb-8 text-2xl font-bold text-gray-900 text-center">
+    <Card className="bg-dark-card border border-dark-border w-full max-w-md p-8">
+      <h2 className="mb-8 text-2xl font-bold text-dark-text text-center">
         {mode === "login" ? "Sign In" : "Create Account"}
       </h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -98,7 +98,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             label="Username"
             type="text"
             error={getErrorMessage(errors, "username")}
-            className="input-focus-ring"
+            className="input-focus-ring bg-dark-bg text-dark-text border-dark-border"
             {...register("username")}
           />
         )}
@@ -106,14 +106,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
           label="Email"
           type="email"
           error={getErrorMessage(errors, "email")}
-          className="input-focus-ring"
+          className="input-focus-ring bg-dark-bg text-dark-text border-dark-border"
           {...register("email")}
         />
         <Input
           label="Password"
           type="password"
           error={getErrorMessage(errors, "password")}
-          className="input-focus-ring"
+          className="input-focus-ring bg-dark-bg text-dark-text border-dark-border"
           {...register("password")}
         />
         <Button
