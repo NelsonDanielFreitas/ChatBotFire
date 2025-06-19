@@ -88,20 +88,101 @@ export const sendMessage = async (req, res, next) => {
     }
 
     try {
-      // Get relevant documents (temporarily disabled vector search)
-      const relevantDocs = await Document.find({}).limit(3);
+      // RAG: Embed the user query
+      let queryEmbedding;
+      let allEmbeddings = [];
+      let topChunks = [];
+      let context = "";
+
+      try {
+        queryEmbedding = await ollamaService.generateEmbedding(
+          decryptedContent
+        );
+
+        // Retrieve all document embeddings with their metadata
+        allEmbeddings = await DocumentEmbedding.find({}).populate("docId");
+
+        if (allEmbeddings.length > 0) {
+          // Compute cosine similarity between query and each chunk
+          function cosineSim(a, b) {
+            if (!a || !b || a.length !== b.length) return 0;
+            let dot = 0,
+              normA = 0,
+              normB = 0;
+            for (let i = 0; i < a.length; i++) {
+              dot += a[i] * b[i];
+              normA += a[i] * a[i];
+              normB += b[i] * b[i];
+            }
+            const denominator = Math.sqrt(normA) * Math.sqrt(normB);
+            return denominator === 0 ? 0 : dot / denominator;
+          }
+
+          const scoredChunks = allEmbeddings
+            .filter((emb) => emb.embedding && emb.embedding.length > 0)
+            .map((emb) => ({
+              docId: emb.docId,
+              embedding: emb.embedding,
+              chunkText: emb.chunkText,
+              chunkIndex: emb.chunkIndex,
+              score: cosineSim(queryEmbedding, emb.embedding),
+            }))
+            .filter((chunk) => chunk.score > 0.1); // Filter out very low similarity chunks
+
+          scoredChunks.sort((a, b) => b.score - a.score);
+          topChunks = scoredChunks.slice(0, 5); // Top 5 relevant chunks
+
+          // Prepare context from the top chunks
+          context = topChunks
+            .map((chunk) => {
+              const doc = chunk.docId;
+              if (!doc) return "";
+              return `From document: ${doc.title}\nSource: ${
+                doc.source
+              }\nCategory: ${doc.category}\nTags: ${doc.tags.join(
+                ", "
+              )}\nRelevance Score: ${chunk.score.toFixed(
+                3
+              )}\nRelevant Content:\n${chunk.chunkText}`;
+            })
+            .join("\n\n");
+        }
+      } catch (embeddingError) {
+        console.error(
+          "RAG embedding failed, falling back to traditional search:",
+          embeddingError
+        );
+
+        // Fallback: Use traditional text search
+        const allDocuments = await Document.find({
+          $or: [
+            { title: { $regex: decryptedContent, $options: "i" } },
+            { content: { $regex: decryptedContent, $options: "i" } },
+            { tags: { $in: [new RegExp(decryptedContent, "i")] } },
+          ],
+        }).limit(3);
+
+        context = allDocuments
+          .map((doc) => {
+            return `From document: ${doc.title}\nSource: ${
+              doc.source
+            }\nCategory: ${doc.category}\nTags: ${doc.tags.join(
+              ", "
+            )}\nContent: ${doc.content.substring(0, 1000)}...`;
+          })
+          .join("\n\n");
+
+        topChunks = allDocuments.map((doc) => ({ docId: doc, score: 0.5 }));
+      }
 
       // Log retrieval
       await RetrievalLog.create({
         conversationId,
         userQuery: decryptedContent,
-        returnedDocs: relevantDocs.map((doc) => doc._id),
+        returnedDocs: topChunks.map((c) => c.docId._id || c.docId),
       });
 
-      // Prepare context from relevant documents
-      const context = relevantDocs.map((doc) => doc.content).join("\n\n");
-
-      // Get bot response using decrypted content
+      // Get bot response using the context (either RAG or fallback)
       const { content: botResponse, tokensUsed } =
         await ollamaService.generateResponse(decryptedContent, context);
 
@@ -127,10 +208,21 @@ export const sendMessage = async (req, res, next) => {
           userMessage,
           botMessage,
           conversation,
-          relevantDocs: relevantDocs.map((doc) => ({
-            title: doc.title,
-            source: doc.source,
-          })),
+          relevantDocs: topChunks
+            .map((chunk) => {
+              const doc = chunk.docId;
+              return doc
+                ? {
+                    title: doc.title,
+                    source: doc.source,
+                    category: doc.category,
+                    tags: doc.tags,
+                    relevanceScore: chunk.score.toFixed(3),
+                    chunkIndex: chunk.chunkIndex,
+                  }
+                : null;
+            })
+            .filter(Boolean),
         },
       });
     } catch (error) {

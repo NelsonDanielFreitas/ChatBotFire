@@ -41,7 +41,7 @@ try {
 function cleanText(text) {
   return (
     text
-      // Fix Portuguese characters
+      // Fix Portuguese characters more comprehensively
       .replace(/[ãâáà]/g, "a")
       .replace(/[ÃÂÁÀ]/g, "A")
       .replace(/[éêè]/g, "e")
@@ -54,18 +54,90 @@ function cleanText(text) {
       .replace(/[ÚÛÙ]/g, "U")
       .replace(/[ç]/g, "c")
       .replace(/[Ç]/g, "C")
-      // Fix common OCR issues
-      .replace(/[|]/g, "I")
-      .replace(/[l]/g, "I")
-      .replace(/[0]/g, "O")
-      .replace(/[1]/g, "I")
-      // Fix spacing and formatting
+      .replace(/[ñ]/g, "n")
+      .replace(/[Ñ]/g, "N")
+
+      // Fix common OCR issues more aggressively
+      .replace(/[|l]/g, "I") // Fix vertical lines and lowercase L
+      .replace(/[0]/g, "O") // Fix zero to O
+      .replace(/[1]/g, "I") // Fix one to I
+      .replace(/[5]/g, "S") // Fix five to S
+      .replace(/[8]/g, "B") // Fix eight to B
+      .replace(/[6]/g, "G") // Fix six to G
+      .replace(/[9]/g, "g") // Fix nine to lowercase g
+
+      // Fix common OCR character substitutions
+      .replace(/[¢]/g, "c")
+      .replace(/[£]/g, "E")
+      .replace(/[¥]/g, "Y")
+      .replace(/[§]/g, "S")
+      .replace(/[©]/g, "C")
+      .replace(/[®]/g, "R")
+      .replace(/[™]/g, "TM")
+      .replace(/[°]/g, "o")
+      .replace(/[²]/g, "2")
+      .replace(/[³]/g, "3")
+      .replace(/[±]/g, "+")
+      .replace(/[×]/g, "x")
+      .replace(/[÷]/g, "/")
+      .replace(/[≠]/g, "!=")
+      .replace(/[≤]/g, "<=")
+      .replace(/[≥]/g, ">=")
+      .replace(/[∞]/g, "infinity")
+      .replace(/[∑]/g, "sum")
+      .replace(/[∏]/g, "product")
+      .replace(/[√]/g, "sqrt")
+      .replace(/[∫]/g, "integral")
+      .replace(/[∆]/g, "delta")
+      .replace(/[∇]/g, "nabla")
+      .replace(/[∂]/g, "partial")
+      .replace(/[∝]/g, "proportional")
+      .replace(/[∅]/g, "empty")
+      .replace(/[∈]/g, "in")
+      .replace(/[∉]/g, "not in")
+      .replace(/[⊂]/g, "subset")
+      .replace(/[⊃]/g, "superset")
+      .replace(/[∪]/g, "union")
+      .replace(/[∩]/g, "intersection")
+      .replace(/[∨]/g, "or")
+      .replace(/[∧]/g, "and")
+      .replace(/[¬]/g, "not")
+      .replace(/[∀]/g, "for all")
+      .replace(/[∃]/g, "exists")
+      .replace(/[∄]/g, "not exists")
+      .replace(/[∴]/g, "therefore")
+      .replace(/[∵]/g, "because")
+      .replace(/[∎]/g, "end proof")
+
+      // Remove excessive whitespace and formatting artifacts
       .replace(/\s+/g, " ") // Replace multiple spaces with single space
+      .replace(/\n\s*\n/g, "\n") // Remove empty lines
+      .replace(/\t/g, " ") // Replace tabs with spaces
+
+      // Fix spacing around punctuation
       .replace(/([a-z])\s+([A-Z])/g, "$1 $2") // Fix space between lowercase and uppercase
       .replace(/([.,!?])\s*([A-Z])/g, "$1 $2") // Ensure space after punctuation
       .replace(/\s+([.,!?])/g, "$1") // Remove spaces before punctuation
+
+      // Fix common word separations
       .replace(/([a-z])-([a-z])/g, "$1$2") // Fix hyphenated words
       .replace(/(\d)\s+(\d)/g, "$1$2") // Fix separated numbers
+
+      // Remove isolated characters and artifacts
+      .replace(/\b[a-zA-Z]\b/g, (match) => {
+        // Keep single letters only if they're common (a, I, A)
+        return ["a", "A", "I", "i"].includes(match) ? match : "";
+      })
+
+      // Remove excessive punctuation
+      .replace(/[.,!?]{2,}/g, (match) => match[0])
+
+      // Clean up page markers and artifacts
+      .replace(/Page\s+\d+:\s*/g, "") // Remove "Page X:" markers
+      .replace(/\[.*?\]/g, "") // Remove content in brackets
+      .replace(/\{.*?\}/g, "") // Remove content in braces
+
+      // Fix spacing around punctuation
       .replace(/([A-Za-z])\s*([.,!?])\s*([A-Za-z])/g, "$1$2 $3") // Fix spacing around punctuation
       .replace(/([A-Za-z])\s*([-–—])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around dashes
       .replace(/([A-Za-z])\s*([/])\s*([A-Za-z])/g, "$1$2$3") // Fix spacing around slashes
@@ -198,14 +270,31 @@ function formatPageText(textContent) {
   return formattedText;
 }
 
+// Function to detect if page has significant text content
+function hasSignificantText(textContent) {
+  const text = textContent.items.map((item) => item.str).join(" ");
+  const cleanText = text.replace(/\s+/g, " ").trim();
+  return cleanText.length > 50; // Consider significant if more than 50 characters
+}
+
 // Function to extract text from an image using Tesseract
 async function extractTextFromImage(imageData) {
   console.log("Initializing Tesseract worker...");
   const worker = await createWorker();
   try {
     console.log("Loading language data...");
-    await worker.loadLanguage("eng");
-    await worker.initialize("eng");
+    // Load both English and Portuguese for better recognition
+    await worker.loadLanguage("eng+por");
+    await worker.initialize("eng+por");
+
+    // Configure OCR for better accuracy
+    await worker.setParameters({
+      tessedit_char_whitelist:
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?;:()[]{}\"'-_/\\+=<>@#$%&*|~`^°²³±×÷≠≤≥∞∑∏√∫∆∇∂∝∅∈∉⊂⊃∪∩∨∧¬∀∃∄∴∵∎ãâáàÃÂÁÀéêèÉÊÈíîìÍÎÌóôõòÓÔÕÒúûùÚÛÙçÇñÑ",
+      tessedit_pageseg_mode: "6", // Uniform block of text
+      tessedit_ocr_engine_mode: "3", // Default, based on what is available
+      preserve_interword_spaces: "1",
+    });
 
     console.log("Recognizing text from image...");
     const {
@@ -224,9 +313,13 @@ async function extractTextFromImage(imageData) {
 
 // Function to render PDF page to canvas
 async function renderPageToCanvas(page) {
-  const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
+  const viewport = page.getViewport({ scale: 3.0 }); // Higher scale for better quality
   const canvas = createCanvas(viewport.width, viewport.height);
   const context = canvas.getContext("2d");
+
+  // Set white background
+  context.fillStyle = "white";
+  context.fillRect(0, 0, viewport.width, viewport.height);
 
   await page.render({
     canvasContext: context,
@@ -234,6 +327,76 @@ async function renderPageToCanvas(page) {
   }).promise;
 
   return canvas;
+}
+
+// Function to post-process and enhance extracted text
+function enhanceExtractedText(text) {
+  return (
+    text
+      // Remove page markers and artifacts
+      .replace(/Page\s+\d+:\s*/g, "")
+      .replace(/\[.*?\]/g, "")
+      .replace(/\{.*?\}/g, "")
+
+      // Fix common OCR artifacts
+      .replace(/\b([a-zA-Z])\s+([a-zA-Z])\b/g, (match, char1, char2) => {
+        // Fix separated letters that should be words
+        const commonWords = [
+          "the",
+          "and",
+          "for",
+          "are",
+          "but",
+          "not",
+          "you",
+          "all",
+          "can",
+          "had",
+          "her",
+          "was",
+          "one",
+          "our",
+          "out",
+          "day",
+          "get",
+          "has",
+          "him",
+          "his",
+          "how",
+          "man",
+          "new",
+          "now",
+          "old",
+          "see",
+          "two",
+          "way",
+          "who",
+          "boy",
+          "did",
+          "its",
+          "let",
+          "put",
+          "say",
+          "she",
+          "too",
+          "use",
+        ];
+        const combined = char1.toLowerCase() + char2.toLowerCase();
+        return commonWords.includes(combined) ? combined : match;
+      })
+
+      // Fix common word separations
+      .replace(/(\w+)\s*-\s*(\w+)/g, "$1$2")
+
+      // Remove excessive whitespace
+      .replace(/\s+/g, " ")
+      .replace(/\n\s*\n/g, "\n")
+
+      // Fix sentence endings
+      .replace(/([.!?])\s*([a-z])/g, "$1 $2")
+
+      .trim()
+  );
 }
 
 export const uploadPdf = async (req, res, next) => {
@@ -307,26 +470,50 @@ export const uploadPdf = async (req, res, next) => {
         try {
           const page = await pdf.getPage(i);
 
-          // Extract regular text
+          // Extract regular text first
           const textContent = await page.getTextContent();
           const pageText = formatPageText(textContent);
 
-          // If no text found, try OCR
-          let finalPageText = pageText;
-          if (!pageText.trim()) {
-            console.log(`No text found on page ${i}, attempting OCR...`);
+          let finalPageText = "";
+
+          // Check if page has significant text content
+          if (hasSignificantText(textContent)) {
+            console.log(
+              `Page ${i} has significant text content, using extracted text`
+            );
+            finalPageText = pageText;
+          } else {
+            console.log(
+              `Page ${i} has minimal text content, attempting OCR...`
+            );
             const canvas = await renderPageToCanvas(page);
             const imageText = await extractTextFromImage(canvas.toBuffer());
             finalPageText = imageText;
           }
 
-          if (finalPageText) {
-            extractedText += `Page ${i}:\n${finalPageText}\n\n`;
-            console.log(`Page ${i} text length:`, finalPageText.length);
-            console.log(
-              `Page ${i} first 50 chars:`,
-              finalPageText.substring(0, 50)
-            );
+          // If still no text, try OCR as fallback
+          if (!finalPageText.trim() && !hasSignificantText(textContent)) {
+            console.log(`Page ${i} has no text, trying OCR as fallback...`);
+            const canvas = await renderPageToCanvas(page);
+            const imageText = await extractTextFromImage(canvas.toBuffer());
+            finalPageText = imageText;
+          }
+
+          if (finalPageText.trim()) {
+            // Clean the text more thoroughly
+            const cleanedText = cleanText(finalPageText);
+            if (cleanedText.trim()) {
+              extractedText += `Page ${i}:\n${cleanedText}\n\n`;
+              console.log(`Page ${i} text length:`, cleanedText.length);
+              console.log(
+                `Page ${i} first 100 chars:`,
+                cleanedText.substring(0, 100)
+              );
+            } else {
+              console.log(
+                `Warning: No meaningful text extracted from page ${i} after cleaning`
+              );
+            }
           } else {
             console.log(`Warning: No text extracted from page ${i}`);
           }
@@ -353,12 +540,21 @@ export const uploadPdf = async (req, res, next) => {
         return next(createError(500, "Failed to extract text from PDF"));
       }
 
+      // Apply final text enhancement
+      console.log("Applying final text enhancement...");
+      const enhancedText = enhanceExtractedText(extractedText);
+      console.log("Enhanced text length:", enhancedText.length);
+      console.log(
+        "First 200 characters of enhanced text:",
+        enhancedText.substring(0, 200)
+      );
+
       // Save to Document model
       console.log("\nPreparing to save to Document model...");
       const documentData = {
         source: "PDF Upload",
         title: req.file.originalname,
-        content: extractedText,
+        content: enhancedText,
         category: "Training",
         tags: ["PDF", "Training", "Upload"],
       };
@@ -376,6 +572,50 @@ export const uploadPdf = async (req, res, next) => {
       console.log(
         "Saved document content length:",
         savedDocument.content.length
+      );
+
+      // RAG: Split content into chunks, embed, and store in DocumentEmbedding
+      const chunkSize = 1000; // characters per chunk
+      const overlapSize = 200; // characters of overlap between chunks
+      const content = savedDocument.content;
+      const numChunks = Math.ceil(
+        (content.length - overlapSize) / (chunkSize - overlapSize)
+      );
+      const chunkPromises = [];
+
+      for (let i = 0; i < numChunks; i++) {
+        const start = i * (chunkSize - overlapSize);
+        const end = Math.min(start + chunkSize, content.length);
+        const chunkText = content.substring(start, end);
+
+        // Skip very short chunks
+        if (chunkText.length < 50) continue;
+
+        chunkPromises.push(
+          (async () => {
+            try {
+              const embedding = await (
+                await import("../services/ollamaService.js")
+              ).default.generateEmbedding(chunkText);
+              await (
+                await import("../models/DocumentEmbedding.js")
+              ).default.create({
+                docId: savedDocument._id,
+                embedding,
+                chunkIndex: i,
+                chunkText: chunkText,
+                startChar: start,
+                endChar: end,
+              });
+            } catch (err) {
+              console.error(`Failed to embed chunk ${i + 1}:`, err);
+            }
+          })()
+        );
+      }
+      await Promise.all(chunkPromises);
+      console.log(
+        `Stored ${numChunks} chunk embeddings for document with overlap.`
       );
 
       // Verify the saved document
@@ -440,5 +680,100 @@ export const getPdfById = async (req, res, next) => {
   } catch (error) {
     console.error("Get PDF error:", error);
     next(error);
+  }
+};
+
+// Utility function to re-embed existing documents
+export const reEmbedDocuments = async (req, res, next) => {
+  try {
+    console.log("Starting re-embedding process for existing documents...");
+
+    // Get all documents that don't have embeddings
+    const documents = await Document.find({});
+    let processedCount = 0;
+    let errorCount = 0;
+
+    for (const doc of documents) {
+      try {
+        // Check if document already has embeddings
+        const existingEmbeddings = await DocumentEmbedding.find({
+          docId: doc._id,
+        });
+        if (existingEmbeddings.length > 0) {
+          console.log(
+            `Document "${doc.title}" already has ${existingEmbeddings.length} embeddings, skipping...`
+          );
+          continue;
+        }
+
+        console.log(`Processing document: ${doc.title}`);
+
+        // Delete any existing embeddings for this document
+        await DocumentEmbedding.deleteMany({ docId: doc._id });
+
+        // Split content into chunks with overlap
+        const chunkSize = 1000;
+        const overlapSize = 200;
+        const content = doc.content;
+        const numChunks = Math.ceil(
+          (content.length - overlapSize) / (chunkSize - overlapSize)
+        );
+
+        const chunkPromises = [];
+        for (let i = 0; i < numChunks; i++) {
+          const start = i * (chunkSize - overlapSize);
+          const end = Math.min(start + chunkSize, content.length);
+          const chunkText = content.substring(start, end);
+
+          if (chunkText.length < 50) continue;
+
+          chunkPromises.push(
+            (async () => {
+              try {
+                const embedding = await (
+                  await import("../services/ollamaService.js")
+                ).default.generateEmbedding(chunkText);
+                await DocumentEmbedding.create({
+                  docId: doc._id,
+                  embedding,
+                  chunkIndex: i,
+                  chunkText: chunkText,
+                  startChar: start,
+                  endChar: end,
+                });
+              } catch (err) {
+                console.error(
+                  `Failed to embed chunk ${i + 1} for document ${doc.title}:`,
+                  err
+                );
+                throw err;
+              }
+            })()
+          );
+        }
+
+        await Promise.all(chunkPromises);
+        console.log(
+          `Successfully embedded ${numChunks} chunks for document: ${doc.title}`
+        );
+        processedCount++;
+      } catch (error) {
+        console.error(`Error processing document ${doc.title}:`, error);
+        errorCount++;
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Re-embedding complete. Processed: ${processedCount}, Errors: ${errorCount}`,
+      data: {
+        processedCount,
+        errorCount,
+        totalDocuments: documents.length,
+      },
+    });
+  } catch (error) {
+    console.error("Re-embedding error:", error);
+    next(createError(500, `Re-embedding failed: ${error.message}`));
   }
 };
